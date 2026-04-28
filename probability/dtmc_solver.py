@@ -19,7 +19,8 @@ class DTMC:
         for (a, b, p) in edges:
             self.adj_list[a].append((b, p))
         self._search()
-    
+        self._calc_stat_dist()
+ 
     def _search(self) -> None:
         self.is_irreducible = True
         for start in self.adj_list.keys():
@@ -36,7 +37,7 @@ class DTMC:
             self.is_irreducible &= (len(vis) == len(self.adj_list.keys()))
         
         self.pos_recurrent = self.is_irreducible
-    
+
     def _calc_stat_dist(self) -> None:
         """
             Esentially just need to solve Ax = b
@@ -61,8 +62,3 @@ class DTMC:
             A[idx][idx] -= total
         dist_vector = np.linalg.solve(A, b)
         self.stat_dist = {node: dist_vector[idx] for node, idx in node_to_idx.items()}
-    
-    
-        
-    
-
