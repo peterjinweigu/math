@@ -7,15 +7,16 @@
     lastly we can solve for the stationary distribution using linear algebra
 """
 import numpy as np
-from collections import deque
+from collections import deque, defaultdict
 
 class DTMC:
-    adj_list: dict[list[tuple]]
-    is_irreducible: bool
-    pos_recurrent: bool
-    stat_dist: dict[int]
 
     def __init__(self, edges: list[tuple]) -> None:
+        self.adj_list: defaultdict(list) = defaultdict(list) # type: ignore
+        self.is_irreducible: bool = False
+        self.pos_recurrent: bool = False
+        self.stat_dist: dict[int] = {}
+
         for (a, b, p) in edges:
             self.adj_list[a].append((b, p))
         self._search()
@@ -55,10 +56,26 @@ class DTMC:
         b[-1] = 1
         for node, idx in node_to_idx.items():
             A[idx][idx] = 1
-            total = 0
             for (nxt, p) in self.adj_list[node]:
                 A[idx][node_to_idx[nxt]] -= p
-                total += p
-            A[idx][idx] -= total
-        dist_vector = np.linalg.solve(A, b)
-        self.stat_dist = {node: dist_vector[idx] for node, idx in node_to_idx.items()}
+        A[-1] = np.ones(n)
+
+        # forfeit the last row because its overdetermined
+
+        try:
+            dist_vector = np.linalg.solve(A, b)
+            self.stat_dist = {node: dist_vector[idx] for node, idx in node_to_idx.items()}
+        except:
+            self.stat_dist = None
+
+def test_one():
+    dtmc = DTMC([(0, 0, 0.5), (0, 1, 0.5), (1, 0, 0.5), (1, 1, 0.5)])
+    assert dtmc.is_irreducible == True
+    assert dtmc.pos_recurrent == True
+    assert dtmc.stat_dist == {0: 0.5, 1: 0.5}
+
+
+if __name__ == "__main__":
+    dtmc = DTMC([(0, 0, 0.5), (0, 1, 0.5), (1, 0, 0.5), (1, 1, 0.5)])
+    test_one()
+    print("All tests passed!")
